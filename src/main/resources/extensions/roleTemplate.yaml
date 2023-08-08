@@ -1,0 +1,41 @@
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-nps-view
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Nps Management"
+    rbac.authorization.halo.run/display-name: "Nps查看"
+    rbac.authorization.halo.run/ui-permissions: |
+      ["plugin:nps:view"]
+rules:
+  - apiGroups: [ "nps.lywq.site" ]
+    resources: [ "*" ]
+    verbs: [ "get", "list" ]
+  - apiGroups: [ "nps.lywq.site" ]
+    resources: [ "plugins/nps" ]
+    resourceNames: [ "PluginNps" ]
+    verbs: [ "get", "list" ]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-nps-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Nps Management"
+    rbac.authorization.halo.run/display-name: "Nps管理"
+    rbac.authorization.halo.run/ui-permissions: |
+      ["plugin:nps:manage"]
+    rbac.authorization.halo.run/dependencies: |
+      ["role-template-nps-view"]
+rules:
+  - apiGroups: [ "nps.lywq.site" ]
+    resources: [ "*" ]
+    verbs: [ "create", "patch", "update", "delete", "deletecollection" ]
+  - apiGroups: [ "nps.lywq.site" ]
+    resources: [ "plugins/nps" ]
+    resourceNames: [ "PluginNps" ]
+    verbs: [ "create", "patch", "update", "delete", "deletecollection" ]

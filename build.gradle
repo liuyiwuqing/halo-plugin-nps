@@ -5,7 +5,7 @@ plugins {
     id "run.halo.plugin.devtools" version "0.0.5"
 }
 
-group 'run.halo.starter'
+group 'site.lywq.nps'
 sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {

@@ -1,0 +1,36 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: plugin-nps-settings
+spec:
+  forms:
+    - group: basic
+      label: 基本设置
+      formSchema:
+        - $formkit: radio
+          name: enable
+          label: 是否开启
+          value: false
+          options:
+            - value: true
+              label: 开启
+            - value: false
+              label: 关闭
+        - $formkit: text
+          label: nps用户注册地址
+          name: npsUserRegisterUrl
+          value: ""
+          validation: required
+          help: "nps用户注册的地址，请打开用户注册开关"
+        - $formkit: text
+          label: nps用户登录地址
+          name: npsUserLoginUrl
+          value: ""
+          validation: required
+          help: "nps用户登录的地址，请打开用户登录开关"
+        - $formkit: text
+          label: 注册码获取地址
+          name: registrationCodeUrl
+          value: ""
+          validation: required
+          help: "获取注册码的地址，该地址需支持验证与生成"

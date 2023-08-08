@@ -1,6 +1,6 @@
 {
-  "name": "@halo-dev/plugin-template",
-  "version": "1.0.0",
+  "name": "@lywq/plugin-nps",
+  "version": "1.2.1",
   "private": true,
   "scripts": {
     "dev": "vite build --watch --mode=development",
@@ -11,8 +11,10 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@halo-dev/api-client": "^2.4.0",
     "@halo-dev/components": "^1.5.0",
     "@halo-dev/console-shared": "^2.6.0",
+    "axios": "^1.4.0",
     "canvas-confetti": "^1.6.0",
     "vue": "^3.3.4"
   },

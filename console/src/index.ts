@@ -9,15 +9,15 @@ export default definePlugin({
     {
       parentName: "Root",
       route: {
-        path: "/example",
-        name: "Example",
+        path: "/nps",
+        name: "Nps",
         component: HomeView,
         meta: {
-          title: "示例页面",
+          permissions: ["plugin:nps:view"],
           searchable: true,
           menu: {
-            name: "示例页面",
-            group: "示例分组",
+            name: "nps管理",
+            group: "tool",
             icon: markRaw(IconPlug),
             priority: 0,
           },
