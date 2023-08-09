@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { Toast, VPageHeader } from "@halo-dev/components";
+import {Toast, VPageHeader} from "@halo-dev/components";
 import apiClient from "@/utils/api-client";
-import { reactive } from "vue";
+import {reactive} from "vue";
+import codeImage from '@/assets/code_image.png'
 
 const operationData = reactive({
   userExist: false,
@@ -15,7 +16,7 @@ const operationData = reactive({
 });
 
 const getNpsUser = async () => {
-  const { data } = await apiClient.get(
+  const {data} = await apiClient.get(
     `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/getNpsUser`
   );
   if (data.status === 0) {
@@ -31,7 +32,7 @@ const getNpsUser = async () => {
 
 const loginOrRegister = async () => {
   if (operationData.userExist) {
-    const { data } = await apiClient.post(
+    const {data} = await apiClient.post(
       `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/userLogin?userName=${operationData.userInfo.userName}&userPassword=${operationData.userInfo.userPassword}`
     );
 
@@ -43,7 +44,7 @@ const loginOrRegister = async () => {
       Toast.warning(data.msg);
     }
   } else {
-    const { data } = await apiClient.post(
+    const {data} = await apiClient.post(
       `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/userRegister?userName=${operationData.userInfo.userName}&userPassword=${operationData.userInfo.userPassword}&registrationCode=${operationData.userInfo.registrationCode}`
     );
 
@@ -57,6 +58,7 @@ const loginOrRegister = async () => {
     }
   }
 };
+
 getNpsUser();
 </script>
 <template>
@@ -87,12 +89,12 @@ getNpsUser();
             placeholder="首次激活请输入密码"
           />
           <label for="loginUserPassword"
-            >注册码：<a
-              style="color: #4461f3"
-              title="点击获取注册码"
-              @click="operationData.isImageVisible = true"
-              >获取注册码</a
-            ></label
+          >注册码：<a
+            style="color: #4461f3"
+            title="点击获取注册码"
+            @click="operationData.isImageVisible = true"
+          >获取注册码</a
+          ></label
           >
           <input
             id="registrationCode"
@@ -111,11 +113,12 @@ getNpsUser();
       <span></span> <span></span> <span></span> <span></span>
       <div class="nps-image-container-inner">
         <h2>微信扫一扫，获取注册码</h2>
-        <div class="image-content">
+        <div class="nps-image-content">
           <img
-            class="image"
             :src="operationData.registrationCodeUrl"
             alt="扫码获取注册码"
+            class="nps-image"
+            v-on:error="operationData.registrationCodeUrl=codeImage"
           />
           <button class="nps-btn" @click="operationData.isImageVisible = false">
             关闭
@@ -202,15 +205,15 @@ getNpsUser();
   transform: translate(-50%, -50%);
 }
 
-.image-content {
+.nps-image-content {
   height: 100%;
   width: 100%;
   padding: 25px;
 }
 
-.image-content .image {
-  width: 100%!important;
-  height: auto!important;
+.nps-image-content .nps-image {
+  width: 100% !important;
+  height: auto !important;
 }
 
 .nps-image-container-inner h2 {
