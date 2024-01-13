@@ -1,12 +1,10 @@
 package site.lywq.nps;
 
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Strings;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +19,6 @@ import reactor.core.publisher.Mono;
 import run.halo.app.core.extension.User;
 import run.halo.app.extension.Metadata;
 import run.halo.app.extension.ReactiveExtensionClient;
-import run.halo.app.infra.utils.JsonUtils;
 
 /**
  * @author lywq
@@ -93,38 +90,36 @@ public class NpsServiceImpl implements NpsService {
      **/
     @Override
     public Mono<ServerResponse> userRegister(NpsUser npsUser) {
-        return buildUrl(UrlType.REGISTER, npsUser).flatMap(
-            url -> {
-                try {
-                    HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .POST(HttpRequest.BodyPublishers.noBody())
-                        .build();
-                    HttpResponse<String> response = HttpClient.newHttpClient()
-                        .send(request, HttpResponse.BodyHandlers.ofString());
+        return buildUrl(UrlType.REGISTER, npsUser).flatMap(url -> {
+            try {
+                // Build URL
+                String apiUrl = url;
 
-                    if (response.statusCode() == 200) {
-                        NpsResults npsResults =
-                            JsonUtils.jsonToObject(response.body(), NpsResults.class);
+                // Send POST request using Hutool's HttpUtil
+                String response = HttpUtil.createPost(apiUrl)
+                    .execute().body();
 
-                        int status = npsResults.getStatus();
-                        String msg = npsResults.getMsg();
-                        if (1 == status && "register success".equals(msg)) {
-                            Mono<NpsUser> npsUserMono = createNpsUser(npsUser);
-                            return npsUserMono.flatMap(this::processSuccess);
-                        } else {
-                            return processFailure(null, msg);
-                        }
-                    } else {
-                        return processFailure(null, "注册失败，请联系管理员");
-                    }
+                // Parse JSON response using Hutool's JSONUtil
+                NpsResults npsResults = JSONUtil.toBean(response, NpsResults.class);
 
-                } catch (Exception e) {
-                    return processFailure(null, e.getMessage());
+                int status = npsResults.getStatus();
+                String msg = npsResults.getMsg();
+                if (status == 1 && "register success".equals(msg)) {
+                    // On success, create NpsUser and process success
+                    Mono<NpsUser> npsUserMono = createNpsUser(npsUser);
+                    return npsUserMono.flatMap(this::processSuccess);
+                } else {
+                    // On failure, process failure
+                    return processFailure(null, msg);
                 }
+
+            } catch (Exception e) {
+                // Handle exceptions and process failure
+                return processFailure(null, e.getMessage());
             }
-        ).onErrorResume(throwable -> processFailure(null, throwable.getMessage()));
+        }).onErrorResume(throwable -> processFailure(null, throwable.getMessage()));
     }
+
 
 
     /**
@@ -276,25 +271,23 @@ public class NpsServiceImpl implements NpsService {
      **/
     private boolean checkRegistrationCode(String registrationCode) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(CHECK_REGISTRATION_CODE_URL + registrationCode))
+            // Build URL with registrationCode
+            String apiUrl = CHECK_REGISTRATION_CODE_URL + registrationCode;
+
+            // Send GET request using Hutool's HttpUtil
+            String response = HttpUtil.createGet(apiUrl)
                 .header("API-Authorization", "lywq1225")
-                .GET()
-                .build();
+                .execute().body();
 
-            HttpResponse<String> response =
-                HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            // Parse JSON response using Hutool's JSONUtil
+            RegistrationCodeResults registrationCodeResults = JSONUtil.toBean(response, RegistrationCodeResults.class);
 
-            if (response.statusCode() == 200) {
-                RegistrationCodeResults registrationCodeResults =
-                    JsonUtils.jsonToObject(response.body(), RegistrationCodeResults.class);
-                return (boolean) registrationCodeResults.getData();
-            } else {
-                return false;
-            }
+            // Check if the response code is 200 and data is true
+            return registrationCodeResults != null && registrationCodeResults.getData() != null && (boolean) registrationCodeResults.getData();
         } catch (Exception e) {
             return false;
         }
     }
+
 
 }
