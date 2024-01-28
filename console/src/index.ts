@@ -1,6 +1,7 @@
 import { definePlugin } from "@halo-dev/console-shared";
 import HomeView from "./views/HomeView.vue";
-import { IconPlug } from "@halo-dev/components";
+import VPN from "~icons/mdi/vpn";
+
 import { markRaw } from "vue";
 
 export default definePlugin({
@@ -18,7 +19,7 @@ export default definePlugin({
           menu: {
             name: "nps管理",
             group: "tool",
-            icon: markRaw(IconPlug),
+            icon: markRaw(VPN),
             priority: 0,
           },
         },

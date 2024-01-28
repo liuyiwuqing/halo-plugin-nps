@@ -2,7 +2,9 @@
 import {Toast, VPageHeader} from "@halo-dev/components";
 import apiClient from "@/utils/api-client";
 import {reactive} from "vue";
-import codeImage from '@/assets/code_image.png'
+import codeImage from '@/assets/code_image.png';
+import VPN from "~icons/mdi/vpn";
+
 
 const operationData = reactive({
   userExist: false,
@@ -63,7 +65,9 @@ getNpsUser();
 </script>
 <template>
   <VPageHeader title="nps管理">
-    <template #icon></template>
+    <template #icon>
+      <VPN class="mr-2 self-center"/>
+    </template>
   </VPageHeader>
   <div class="nps-container">
     <div class="nps-form-group">
