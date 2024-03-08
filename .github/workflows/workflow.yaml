@@ -3,9 +3,18 @@ name: Build Plugin JAR File
 on:
   push:
     branches: [ main ]
+    paths:
+      - "**"
+      - "!**.md"
   release:
     types:
       - created
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**"
+      - "!**.md"
 
 jobs:
   build:
@@ -51,10 +60,10 @@ jobs:
           version=${version#v}
           sed -i "s/version=.*-SNAPSHOT$/version=$version/1" gradle.properties
           ./gradlew clean build -x test
-      - name: Archive plugin-template jar
+      - name: Archive plugin-nps jar
         uses: actions/upload-artifact@v2
         with:
-          name: plugin-template
+          name: plugin-nps
           path: |
             build/libs/*.jar
           retention-days: 1
@@ -64,10 +73,10 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
-      - name: Download plugin-template jar
+      - name: Download plugin-nps jar
         uses: actions/download-artifact@v2
         with:
-          name: plugin-template
+          name: plugin-nps
           path: build/libs
       - name: Get Name of Artifact
         id: get_artifact
