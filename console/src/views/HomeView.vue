@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import {Toast, VPageHeader} from "@halo-dev/components";
 import apiClient from "@/utils/api-client";
-import {reactive} from "vue";
-import codeImage from '@/assets/code_image.png';
+import {onMounted, reactive} from "vue";
 import VPN from "~icons/mdi/vpn";
+import codeImage from '@/assets/code_image.png'
 
 
 const operationData = reactive({
@@ -13,8 +13,9 @@ const operationData = reactive({
     userPassword: "",
     registrationCode: "",
   },
-  isImageVisible: false,
   registrationCodeUrl: "",
+  registrationCodeBoxShow: false,
+  formBoxShow: true,
 });
 
 const getNpsUser = async () => {
@@ -37,7 +38,6 @@ const loginOrRegister = async () => {
     const {data} = await apiClient.post(
       `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/userLogin?userName=${operationData.userInfo.userName}&userPassword=${operationData.userInfo.userPassword}`
     );
-
     if (data.status === 0) {
       Toast.success(data.msg);
       window.open(data.data, "_blank");
@@ -46,22 +46,34 @@ const loginOrRegister = async () => {
       Toast.warning(data.msg);
     }
   } else {
-    const {data} = await apiClient.post(
-      `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/userRegister?userName=${operationData.userInfo.userName}&userPassword=${operationData.userInfo.userPassword}&registrationCode=${operationData.userInfo.registrationCode}`
-    );
-
-    if (data.status === 0) {
-      operationData.userInfo = data.data;
-      operationData.userExist = true;
-      Toast.success(data.msg);
-      await loginOrRegister();
+    if (operationData.userInfo.userPassword === "") {
+      Toast.warning("请输入密码");
+      return;
+    } else if (operationData.userInfo.registrationCode === "") {
+      Toast.warning("请输入注册码");
+      operationData.formBoxShow = false;
+      operationData.registrationCodeBoxShow = true;
+      return;
     } else {
-      Toast.warning(data.msg);
+      const {data} = await apiClient.post(
+        `/apis/nps.lywq.site/v1alpha1/plugins/PluginNps/userRegister?userName=${operationData.userInfo.userName}&userPassword=${operationData.userInfo.userPassword}&registrationCode=${operationData.userInfo.registrationCode}`
+      );
+      if (data.status === 0) {
+        operationData.userInfo = data.data;
+        operationData.userExist = true;
+        Toast.success(data.msg);
+        await loginOrRegister();
+      } else {
+        Toast.warning(data.msg);
+      }
     }
   }
 };
 
-getNpsUser();
+//初始化
+onMounted(() => {
+  getNpsUser();
+});
 </script>
 <template>
   <VPageHeader title="nps管理">
@@ -70,64 +82,40 @@ getNpsUser();
     </template>
   </VPageHeader>
   <div class="nps-container">
-    <div class="nps-form-group">
-      <div class="nps-title">
-        NPS账号{{ operationData.userExist ? "登录" : "注册" }}
-      </div>
-      <form @submit.prevent="loginOrRegister">
-        <div>
-          <label for="loginUserName">账号：</label>
-          <input
-            id="loginUserName"
-            v-model="operationData.userInfo.userName"
-            type="text"
-            disabled
-          />
+    <div class="form-box" v-show="operationData.formBoxShow">
+      <form class="form" @submit.prevent="loginOrRegister">
+        <span class="title">NPS账号{{ operationData.userExist ? "登录" : "注册" }}</span>
+        <span class="subtitle">NPS内网穿透服务快速登录</span>
+        <div class="form-container">
+          <h1>{{ operationData.userInfo.userName }}</h1>
+          <input hidden v-model="operationData.userInfo.userName" type="text" class="input" placeholder="账号" disabled>
+          <input v-show="!operationData.userExist" v-model="operationData.userInfo.userPassword" type="text"
+                 class="input" placeholder="首次激活请输入密码">
+          <input v-show="!operationData.userExist" v-model="operationData.userInfo.registrationCode" type="text"
+                 class="input" placeholder="请输入注册码">
         </div>
-        <div v-show="!operationData.userExist">
-          <label for="loginUserPassword">密码：</label>
-          <input
-            id="loginUserPassword"
-            v-model="operationData.userInfo.userPassword"
-            type="text"
-            placeholder="首次激活请输入密码"
-          />
-          <label for="loginUserPassword"
-          >注册码：<a
-            style="color: #4461f3"
-            title="点击获取注册码"
-            @click="operationData.isImageVisible = true"
-          >获取注册码</a
-          ></label
-          >
-          <input
-            id="registrationCode"
-            v-model="operationData.userInfo.registrationCode"
-            type="text"
-            placeholder="请输入注册码"
-          />
-        </div>
-        <button class="nps-button" type="submit">
-          {{ operationData.userExist ? "登录" : "注册" }}
-        </button>
+        <button type="submit">{{ operationData.userExist ? "登录" : "注册" }}</button>
       </form>
+      <div class="form-section">
+        <p>没有注册码? <a href="javascript:void(0);"
+                          @click="operationData.formBoxShow = false; operationData.registrationCodeBoxShow = true;">点击获取</a>
+        </p>
+      </div>
     </div>
 
-    <div v-if="operationData.isImageVisible" class="nps-image-container">
-      <span></span> <span></span> <span></span> <span></span>
-      <div class="nps-image-container-inner">
-        <h2>微信扫一扫，获取注册码</h2>
-        <div class="nps-image-content">
-          <img
-            :src="operationData.registrationCodeUrl"
-            alt="扫码获取注册码"
-            class="nps-image"
-            v-on:error="operationData.registrationCodeUrl=codeImage"
-          />
-          <button class="nps-btn" @click="operationData.isImageVisible = false">
-            关闭
-          </button>
-        </div>
+    <div v-show="operationData.registrationCodeBoxShow" class="registrationCode-box">
+      <p class="cardHeading">微信扫一扫，获取注册码</p>
+      <img
+        :src="operationData.registrationCodeUrl"
+        alt="扫码获取注册码"
+        class="nps-image"
+        v-on:error="operationData.registrationCodeUrl=codeImage"
+      />
+      <p class="cardPara">请使用手机微信扫一扫，根据提示获取注册码！</p>
+      <div class="buttonContainer">
+        <button class="closeBtn"
+                @click="operationData.registrationCodeBoxShow = false; operationData.formBoxShow = true;">返回
+        </button>
       </div>
     </div>
   </div>
@@ -135,241 +123,150 @@ getNpsUser();
 <style>
 .nps-container {
   width: 100%;
-  padding-right: 0.5rem;
-  padding-left: 0.5rem;
-  padding-top: 10rem;
 }
 
-.nps-title {
-  font-size: 30px;
-  font-weight: bold;
-  text-align: center;
-  line-height: 80px;
-}
-
-.nps-form-group {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-}
-
-.nps-form-group label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.nps-form-group input[type="text"],
-.nps-form-group input[type="password"] {
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  width: 100%;
-}
-
-.nps-form-group button {
-  padding: 10px;
-  background: #007bff;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  border-radius: 5px;
-  width: 100%;
-}
-
-.nps-form-group button:hover {
-  background: #0069d9;
-}
-
-.nps-button {
-  margin-top: 20px;
-  margin-bottom: 5px;
-}
-
-.nps-image-container {
-  position: relative;
-  padding: 130px 0;
-  width: 320px;
-  height: 480px;
-  background: #0c0116;
+.nps-container .form-box {
+  background-color: coral;
+  margin-top: 10%;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 300px;
   overflow: hidden;
-  box-shadow: 0 0 10px #747772;
-  border-radius: 5px;
-  margin: -500px auto 50px;
+  border-radius: 16px;
+  color: #010101;
 }
 
-.nps-image-container-inner {
-  position: absolute;
-  height: 98%;
-  width: 98%;
-  top: 50%;
-  left: 50%;
-  background: #0c0116;
-  transform: translate(-50%, -50%);
-}
-
-.nps-image-content {
-  height: 100%;
-  width: 100%;
-  padding: 25px;
-}
-
-.nps-image-content .nps-image {
-  width: 100% !important;
-  height: auto !important;
-}
-
-.nps-image-container-inner h2 {
-  font-size: 25px;
-  color: #d7a3d7;
+.nps-container .form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 24px;
+  gap: 16px;
   text-align: center;
-  padding-top: 35px;
 }
 
-.nps-btn {
-  cursor: pointer;
-  color: white;
-  margin-top: 40px;
+/*Form text*/
+.nps-container .title {
+  font-weight: bold;
+  font-size: 1.6rem;
+}
+
+.nps-container .subtitle {
+  font-size: 1rem;
+  color: #666;
+}
+
+/*Inputs box*/
+.nps-container .form-container {
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #fff;
+  margin: 1rem 0 .5rem;
   width: 100%;
-  padding: 12px;
-  outline: none;
-  background: #800080;
+}
+
+.nps-container .form-container > h1 {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: burlywood;
+}
+
+.nps-container .input {
+  text-align: center;
+  background: none;
+  border: 0;
+  outline: 0;
+  height: 40px;
+  width: 100%;
+  border-bottom: 1px solid #eee;
+  font-size: .9rem;
+  padding: 8px 15px;
+}
+
+.nps-container .form-section {
+  padding: 16px;
+  font-size: .85rem;
+  background-color: #e0ecfb;
+  box-shadow: rgb(0 0 0 / 8%) 0 -1px;
+}
+
+.nps-container .form-section a {
+  font-weight: bold;
+  color: #0066ff;
+  transition: color .3s ease;
+}
+
+.nps-container .form-section a:hover {
+  color: #005ce6;
+  text-decoration: underline;
+}
+
+/*Button*/
+.nps-container .form button {
+  background-color: #0066ff;
+  color: #fff;
+  border: 0;
+  border-radius: 24px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .3s ease;
+}
+
+.nps-container .form button:hover {
+  background-color: #005ce6;
+}
+
+.registrationCode-box {
+  margin-top: 10%;
+  margin-left: auto;
+  margin-right: auto;
+  width: 220px;
+  height: 300px;
+  background: rgb(245, 245, 245);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 35px;
+  gap: 8px;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123);
+  border-radius: 20px;
+}
+
+.registrationCode-box .cardHeading {
+  color: black;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+
+.registrationCode-box .cardPara {
+  color: rgb(133, 133, 133);
+  font-size: 0.6em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.registrationCode-box .buttonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.registrationCode-box .closeBtn {
+  width: 120px;
+  height: 25px;
+  background-color: rgb(168, 131, 255);
+  color: white;
   border: none;
-  font-size: 18px;
-  border-radius: 10px;
-  transition: 0.4s;
+  border-radius: 20px;
+  font-size: 0.7em;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.nps-btn:hover {
-  background: #c907c9;
-}
-
-.nps-image-container span {
-  position: absolute;
-  height: 50%;
-  width: 50%;
-}
-
-.nps-image-container span:nth-child(1) {
-  background: #ffda05;
-  top: 0;
-  left: -48%;
-  animation: 5s span1 infinite linear;
-  animation-delay: 1s;
-}
-
-.nps-image-container span:nth-child(2) {
-  background: #00a800;
-  bottom: 0;
-  right: -48%;
-  animation: 5s span2 infinite linear;
-}
-
-.nps-image-container span:nth-child(3) {
-  background: #800080;
-  right: -48%;
-  top: 0px;
-  animation: 5s span3 infinite linear;
-}
-
-.nps-image-container span:nth-child(4) {
-  background: #ff0000;
-  bottom: 0;
-  right: -48%;
-  animation: 5s span4 infinite linear;
-  animation-delay: 1s;
-}
-
-@keyframes span1 {
-  0% {
-    top: -48%;
-    left: -48%;
-  }
-  25% {
-    top: -48%;
-    left: 98%;
-  }
-  50% {
-    top: 98%;
-    left: 98%;
-  }
-  75% {
-    top: 98%;
-    left: -48%;
-  }
-  100% {
-    top: -48%;
-    left: -48%;
-  }
-}
-
-@keyframes span2 {
-  0% {
-    bottom: -48%;
-    right: -48%;
-  }
-  25% {
-    bottom: -48%;
-    right: 98%;
-  }
-  50% {
-    bottom: 98%;
-    right: 98%;
-  }
-  75% {
-    bottom: 98%;
-    right: -48%;
-  }
-  100% {
-    bottom: -48%;
-    right: -48%;
-  }
-}
-
-@keyframes span3 {
-  0% {
-    top: -48%;
-    left: -48%;
-  }
-  25% {
-    top: -48%;
-    left: 98%;
-  }
-  50% {
-    top: 98%;
-    left: 98%;
-  }
-  75% {
-    top: 98%;
-    left: -48%;
-  }
-  100% {
-    top: -48%;
-    left: -48%;
-  }
-}
-
-@keyframes span4 {
-  0% {
-    bottom: -48%;
-    right: -48%;
-  }
-  25% {
-    bottom: -48%;
-    right: 98%;
-  }
-  50% {
-    bottom: 98%;
-    right: 98%;
-  }
-  75% {
-    bottom: 98%;
-    right: -48%;
-  }
-  100% {
-    bottom: -48%;
-    right: -48%;
-  }
+.registrationCode-box .closeBtn:hover {
+  background-color: rgb(153, 110, 255);
 }
 </style>
