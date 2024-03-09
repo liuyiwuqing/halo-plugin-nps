@@ -96,7 +96,7 @@ onMounted(() => {
         </div>
         <button type="submit">{{ operationData.userExist ? "登录" : "注册" }}</button>
       </form>
-      <div class="form-section">
+      <div v-if="!operationData.userExist" class="form-section">
         <p>没有注册码? <a href="javascript:void(0);"
                           @click="operationData.formBoxShow = false; operationData.registrationCodeBoxShow = true;">点击获取</a>
         </p>
