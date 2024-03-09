@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import {Toast, VPageHeader} from "@halo-dev/components";
 import apiClient from "@/utils/api-client";
-import {onMounted, reactive} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import VPN from "~icons/mdi/vpn";
 import codeImage from '@/assets/code_image.png'
-
 
 const operationData = reactive({
   userExist: false,
@@ -30,6 +29,11 @@ const getNpsUser = async () => {
     operationData.registrationCodeUrl = data.data.registrationCodeUrl;
     operationData.userExist = false;
     Toast.warning(data.msg);
+  }
+  
+  let npsContainer = document.getElementById("nps-container");
+  if (npsContainer) {
+    npsContainer.style.display = "block";
   }
 };
 
@@ -81,7 +85,7 @@ onMounted(() => {
       <VPN class="mr-2 self-center"/>
     </template>
   </VPageHeader>
-  <div class="nps-container">
+  <div id="nps-container" class="nps-container" style="display: none">
     <div class="form-box" v-show="operationData.formBoxShow">
       <form class="form" @submit.prevent="loginOrRegister">
         <span class="title">NPS账号{{ operationData.userExist ? "登录" : "注册" }}</span>
